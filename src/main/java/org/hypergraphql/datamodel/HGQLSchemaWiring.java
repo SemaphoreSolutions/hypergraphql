@@ -9,15 +9,6 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import org.hypergraphql.config.schema.FieldOfTypeConfig;
-import org.hypergraphql.config.schema.QueryFieldConfig;
-import org.hypergraphql.config.schema.TypeConfig;
-import org.hypergraphql.config.system.ServiceConfig;
-import org.hypergraphql.datafetching.services.Service;
-import org.hypergraphql.exception.HGQLConfigurationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +16,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+import lombok.extern.slf4j.Slf4j;
+import org.hypergraphql.config.schema.FieldOfTypeConfig;
+import org.hypergraphql.config.schema.TypeConfig;
+import org.hypergraphql.config.system.ServiceConfig;
+import org.hypergraphql.datafetching.services.Service;
+import org.hypergraphql.exception.HGQLConfigurationException;
 import static graphql.Scalars.GraphQLID;
 import static graphql.Scalars.GraphQLInt;
 import static graphql.Scalars.GraphQLString;
@@ -39,13 +35,33 @@ import static org.hypergraphql.config.schema.HGQLVocabulary.SCALAR_TYPES;
  * <p>
  * This class defines the GraphQL wiring (data fetchers)
  */
-
+@Slf4j
 public class HGQLSchemaWiring {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(HGQLSchemaWiring.class);
 
     private final HGQLSchema hgqlSchema;
     private final GraphQLSchema schema;
+
+    private final Map<String, GraphQLArgument> defaultArguments = Map.of(// TODO - should this be hardcoded?
+            "limit", new GraphQLArgument("limit", GraphQLInt),
+            "offset", new GraphQLArgument("offset", GraphQLInt),
+            "lang", new GraphQLArgument("lang", GraphQLString),
+            "uris", new GraphQLArgument("uris", new GraphQLNonNull(new GraphQLList(GraphQLID)))
+    );
+
+    private final List<GraphQLArgument> getByIdQueryArgs = List.of(defaultArguments.get("uris"));
+
+    private final List<GraphQLArgument> getQueryArgs = List.of(
+            defaultArguments.get("limit"),
+            defaultArguments.get("offset")
+    );
+
+    public HGQLSchemaWiring(final TypeDefinitionRegistry registry,
+                            final String schemaName,
+                            final List<ServiceConfig> serviceConfigs) {
+
+        this.hgqlSchema = new HGQLSchema(registry, schemaName, generateServices(serviceConfigs));
+        this.schema = generateSchema();
+    }
 
     public GraphQLSchema getSchema() {
         return schema;
@@ -53,34 +69,6 @@ public class HGQLSchemaWiring {
 
     public HGQLSchema getHgqlSchema() {
         return hgqlSchema;
-    }
-
-    // TODO - should this be hardcoded?
-    private final Map<String, GraphQLArgument> defaultArguments = Map.of(
-        "limit", new GraphQLArgument("limit", GraphQLInt),
-        "offset", new GraphQLArgument("offset", GraphQLInt),
-        "lang", new GraphQLArgument("lang", GraphQLString),
-        "uris", new GraphQLArgument("uris", new GraphQLNonNull(new GraphQLList(GraphQLID)))
-    );
-
-    private final List<GraphQLArgument> getQueryArgs = List.of(
-        defaultArguments.get("limit"),
-        defaultArguments.get("offset")
-    );
-
-    private final List<GraphQLArgument> getByIdQueryArgs = List.of(defaultArguments.get("uris"));
-
-    public HGQLSchemaWiring(final TypeDefinitionRegistry registry,
-                            final String schemaName,
-                            final List<ServiceConfig> serviceConfigs) {
-
-        try {
-            this.hgqlSchema = new HGQLSchema(registry, schemaName, generateServices(serviceConfigs));
-            this.schema = generateSchema();
-
-        } catch (Exception e) {
-            throw new HGQLConfigurationException("Unable to perform schema wiring", e);
-        }
     }
 
     // TODO - investigate alternatives
@@ -103,7 +91,7 @@ public class HGQLSchemaWiring {
                     | InstantiationException
                     | ClassNotFoundException
                     | InvocationTargetException e) {
-                LOGGER.error("Problem adding service {}", serviceConfig.getId(), e);
+                log.error("Problem adding service {}", serviceConfig.getId(), e);
                 throw new HGQLConfigurationException("Error wiring up services", e);
             }
         });
@@ -126,7 +114,6 @@ public class HGQLSchemaWiring {
 
     }
 
-
     private GraphQLFieldDefinition getIdField() {
         final var fetcherFactory = new FetcherFactory(hgqlSchema);
 
@@ -147,13 +134,12 @@ public class HGQLSchemaWiring {
                 .dataFetcher(fetcherFactory.typeFetcher(this.hgqlSchema.getTypes())).build();
     }
 
-
     private GraphQLObjectType registerGraphQLQueryType(final TypeConfig type) {
 
         final var typeName = type.getName();
-        final var description = "Top queryable predicates. " +
-                "_GET queries return all objects of a given type, possibly restricted by limit and offset values. " +
-                "_GET_BY_ID queries require a set of URIs to be specified.";
+        final var description = "Top queryable predicates. "
+                + "_GET queries return all objects of a given type, possibly restricted by limit and offset values. "
+                + "_GET_BY_ID queries require a set of URIs to be specified.";
 
         final List<GraphQLFieldDefinition> builtFields;
         final Map<String, FieldOfTypeConfig> fields = type.getFields();
@@ -224,7 +210,7 @@ public class HGQLSchemaWiring {
             args.add(defaultArguments.get("lang"));
         }
 
-        if(field.getService() == null) {
+        if (field.getService() == null) {
             throw new HGQLConfigurationException("Value of 'service' for field '" + field.getName() + "' cannot be null");
         }
 
@@ -252,14 +238,14 @@ public class HGQLSchemaWiring {
         final var queryFieldConfig = this.hgqlSchema.getQueryFields().get(field.getName());
 
         final var service = queryFieldConfig.service();
-        if(service == null) {
+        if (service == null) {
             throw new HGQLConfigurationException("Service for field '" + field.getName() + "':['"
                     + queryFieldConfig.type() + "'] not specified (null)");
         }
         final var serviceId = service.getId();
-        final var description = (queryFieldConfig.type().equals(HGQL_QUERY_GET_FIELD)) ?
-                "Get instances of " + field.getTargetName() + " (service: " + serviceId + ")" :
-                "Get instances of " + field.getTargetName() + " by URIs (service: " + serviceId + ")";
+        final var description = (queryFieldConfig.type().equals(HGQL_QUERY_GET_FIELD))
+                ? "Get instances of " + field.getTargetName() + " (service: " + serviceId + ")"
+                : "Get instances of " + field.getTargetName() + " by URIs (service: " + serviceId + ")";
 
         return newFieldDefinition()
                 .name(field.getName())

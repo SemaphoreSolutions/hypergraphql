@@ -1,13 +1,10 @@
 package org.hypergraphql.query;
 
 import graphql.language.Document;
-import graphql.language.SourceLocation;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
 import graphql.validation.ValidationError;
-import graphql.validation.ValidationErrorType;
 import graphql.validation.Validator;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,24 +30,11 @@ public class QueryValidator {
 
         final Document document;
 
-        try {
-            document = parser.parseDocument(query);
-            result.setParsedQuery(document);
-        } catch (Exception e) {
-            final ValidationError err =
-                    new ValidationError(ValidationErrorType.InvalidSyntax, new SourceLocation(0, 0), "Invalid query syntax.");
-            validationErrors.add(err);
-            result.setValid(false);
-            return result;
-        }
+        document = parser.parseDocument(query);
+        result.setParsedQuery(document);
 
         validationErrors.addAll(validator.validateDocument(schema, document));
         result.setValid(validationErrors.size() == 0);
-//        if (validationErrors.size() > 0) {
-//            result.setValid(false);
-//            return result;
-//        }
-//        result.setValid(true);
         return result;
     }
 }

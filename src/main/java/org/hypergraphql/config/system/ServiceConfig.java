@@ -14,6 +14,7 @@ public class ServiceConfig {
     private final String filepath;
     private final String filetype;
 
+    @SuppressWarnings("checkstyle:ParameterNumber")
     @JsonCreator
     public ServiceConfig(@JsonProperty("id") final String id,
                          @JsonProperty("type") final String type,
@@ -37,29 +38,32 @@ public class ServiceConfig {
     public String getId() {
         return id;
     }
+
     public String getFilepath() {
         return filepath;
     }
+
     public String getFiletype() {
         return filetype;
     }
+
     public String getType() {
         return type;
     }
+
     public String getUrl() {
         return url;
     }
+
     public String getGraph() {
         return graph;
     }
+
     public String getUser() {
         return user;
     }
+
     public String getPassword() {
         return password;
     }
-
-//    protected void setUrl(final String url) {
-//        this.url = url;
-//    }
 }

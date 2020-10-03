@@ -5,7 +5,7 @@ import java.util.Map;
 public class TypeConfig {
 
     private final String id;
-    private final String name;
+    private final String typeName;
     private final Map<String, FieldOfTypeConfig> fields;
 
     public TypeConfig(
@@ -13,13 +13,13 @@ public class TypeConfig {
             final String id,
             final Map<String, FieldOfTypeConfig> fields) {
 
-        this.name = name;
+        this.typeName = name;
         this.id = id;
         this.fields = fields;
     }
 
     public String getName() {
-        return name;
+        return typeName;
     }
 
     public String getId() {

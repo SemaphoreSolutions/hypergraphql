@@ -3,12 +3,6 @@ package org.hypergraphql.services;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.request.GetRequest;
-import org.apache.commons.io.FilenameUtils;
-import org.hypergraphql.config.system.HGQLConfig;
-import org.hypergraphql.exception.HGQLConfigurationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -21,13 +15,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.apache.commons.io.FilenameUtils;
+import org.hypergraphql.config.system.HGQLConfig;
+import org.hypergraphql.exception.HGQLConfigurationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ApplicationConfigurationService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfigurationService.class);
     private S3Service s3Service;
     private final HGQLConfigService hgqlConfigService = new HGQLConfigService();
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(ApplicationConfigurationService.class);
 
     public List<HGQLConfig> readConfigurationFromS3(final String configUri,
                                                     final String username,
@@ -40,14 +38,14 @@ public class ApplicationConfigurationService {
             throw new HGQLConfigurationException("Invalid S3 URL", e);
         }
 
-        if(s3Service == null) {
+        if (s3Service == null) {
             s3Service = new S3Service();
         }
 
         final InputStream inputStream = s3Service.openS3Stream(uri, username, password);
         final HGQLConfig config = hgqlConfigService.loadHGQLConfig(configUri, inputStream, username, password, false);
 
-        return Collections.singletonList(config);
+        return List.of(config);
     }
 
     public List<HGQLConfig> readConfigurationFromUrl(final String configUri,
@@ -55,7 +53,7 @@ public class ApplicationConfigurationService {
                                                      final String password) {
 
         final GetRequest getRequest;
-        if(username == null && password == null) {
+        if (username == null && password == null) {
             getRequest = Unirest.get(configUri);
         } else {
             getRequest = Unirest.get(configUri).basicAuth(username, password);
@@ -64,16 +62,16 @@ public class ApplicationConfigurationService {
         try {
             final InputStream inputStream = getRequest.asBinary().getBody();
             final HGQLConfig config = hgqlConfigService.loadHGQLConfig(configUri, inputStream, username, password, false);
-            return Collections.singletonList(config);
+            return List.of(config);
         } catch (UnirestException e) {
             throw new HGQLConfigurationException("Unable to read from remote URL", e);
         }
     }
 
-    public List<HGQLConfig> getConfigFiles(final String ... configPathStrings) {
+    public List<HGQLConfig> getConfigFiles(final String... configPathStrings) {
 
         final List<HGQLConfig> configFiles = new ArrayList<>();
-        if(configPathStrings != null) {
+        if (configPathStrings != null) {
             Arrays.stream(configPathStrings).forEach(configPathString ->
                     configFiles.addAll(getConfigurationsFromFile(configPathString)));
         }
@@ -103,7 +101,7 @@ public class ApplicationConfigurationService {
                 }
             } else { // assume regular file
                 LOGGER.debug("Regular File");
-                try(InputStream in = new FileInputStream(configPath)) {
+                try (InputStream in = new FileInputStream(configPath)) {
                     configurations.add(hgqlConfigService.loadHGQLConfig(configPathString, in, false));
                 }
             }
@@ -117,7 +115,7 @@ public class ApplicationConfigurationService {
 
         final String filename = getConfigFilename(configPathString);
 
-        try (final InputStream in = getClass().getClassLoader().getResourceAsStream(filename)) {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(filename)) {
 
             if (in == null) {
                 // try to get from file - probably being run from an IDE with CP as filesystem
@@ -140,20 +138,20 @@ public class ApplicationConfigurationService {
         return configPathString.startsWith("/") ? fn : fn.substring(fn.indexOf("/") + 1);
     }
 
-    public List<HGQLConfig> getConfigResources(final String ... resourcePaths) {
+    public List<HGQLConfig> getConfigResources(final String... resourcePaths) {
 
         final List<HGQLConfig> configurations = new ArrayList<>();
 
-        if(resourcePaths != null) {
+        if (resourcePaths != null) {
             Arrays.stream(resourcePaths).forEach(
-                    resourcePath -> {
-                        final URL sourceUrl = getClass().getClassLoader().getResource(resourcePath);
+                resourcePath -> {
+                    final URL sourceUrl = getClass().getClassLoader().getResource(resourcePath);
 
-                        LOGGER.info("Resource path: {}", resourcePath);
-                        if(sourceUrl != null) {
-                            configurations.addAll(getConfigurationsFromClasspath(sourceUrl.getFile()));
-                        }
+                    LOGGER.info("Resource path: {}", resourcePath);
+                    if (sourceUrl != null) {
+                        configurations.addAll(getConfigurationsFromClasspath(sourceUrl.getFile()));
                     }
+                }
             );
         }
 

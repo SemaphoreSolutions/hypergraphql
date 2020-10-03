@@ -2,17 +2,21 @@ package org.hypergraphql.datafetching.services;
 
 import org.hypergraphql.config.system.ServiceConfig;
 
-public abstract class SPARQLService extends Service {
+public abstract class SPARQLService extends Service { // TODO - this could do with a better name
 
-    protected String graph;
+    private String graph;
 
     public String getGraph() {
         return graph;
     }
 
+    public void setGraph(final String graphName) {
+        this.graph = graphName;
+    }
+
     public void setParameters(final ServiceConfig serviceConfig) {
 
-        this.id = serviceConfig.getId();
+        setId(serviceConfig.getId());
         if (serviceConfig.getGraph() == null) {
             this.graph = "";
         } else {

@@ -2,8 +2,8 @@ package org.hypergraphql.util;
 
 import org.apache.jena.riot.Lang;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LangUtilsTest {
 
@@ -63,8 +63,8 @@ class LangUtilsTest {
     @Test
     void should_reject_unknown_type() {
 
-        final String message = "GremLin is not currently supported";
-        final Exception thrown = assertThrows(RuntimeException.class, () -> LangUtils.forName("GremLin"));
+        final String message = "Gremlin is not currently supported";
+        final Exception thrown = assertThrows(RuntimeException.class, () -> LangUtils.forName("Gremlin"));
         assertEquals(message, thrown.getMessage());
     }
 }

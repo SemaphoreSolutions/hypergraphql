@@ -1,30 +1,27 @@
 package org.hypergraphql.datafetching;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 
+@Slf4j
 public class ExecutionForest  {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(ExecutionForest.class);
-
-    private final HashSet<ExecutionTreeNode> forest;
+    private final Collection<ExecutionTreeNode> forest;
 
     public ExecutionForest() {
         this.forest = new HashSet<>();
     }
 
-    public HashSet<ExecutionTreeNode> getForest() {
+    public Collection<ExecutionTreeNode> getForest() {
         return forest;
     }
 
@@ -37,11 +34,12 @@ public class ExecutionForest  {
             final var fetchingExecution = new FetchingExecution(new HashSet<>(), node);
             futureModels.add(executor.submit(fetchingExecution));
         });
+
         futureModels.forEach(futureModel -> {
             try {
                 model.add(futureModel.get());
             } catch (InterruptedException | ExecutionException e) {
-                LOGGER.error("Problem generating model", e);
+                log.error("Problem generating model", e);
             }
         });
         return model;

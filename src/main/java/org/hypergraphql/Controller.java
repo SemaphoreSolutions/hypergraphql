@@ -1,18 +1,16 @@
 package org.hypergraphql;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import graphql.GraphQLError;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import graphql.GraphQLError;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hypergraphql.config.system.HGQLConfig;
 import org.hypergraphql.services.HGQLQueryService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.ModelAndView;
 import spark.Request;
 import spark.Response;
@@ -26,9 +24,9 @@ import static spark.Spark.before;
  * This is the primary &quot;Controller&quot; used by the application.
  * The handler methods are in the get() and post() lambdas
  */
+@Slf4j
 public class Controller {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Controller.class);
     private static final String DEFAULT_MIME_TYPE = "RDF/XML";
     private static final String DEFAULT_ACCEPT_TYPE = "application/rdf+xml";
 
@@ -107,10 +105,10 @@ public class Controller {
             final var acceptType = req.headers("accept");
 
             final var mime = MIME_MAP.getOrDefault(acceptType, null);
-            final var contentType = MIME_MAP.getOrDefault(acceptType, "application/json");
+//            final var contentType = MIME_MAP.getOrDefault(acceptType, "application/json");
             final var graphQLCompatible = GRAPHQL_COMPATIBLE_TYPE.getOrDefault(acceptType, true);
 //            final var mime = MIME_MAP.getOrDefault(acceptType, null);
-//            final var contentType = MIME_MAP.containsKey(acceptType) ? acceptType : "application/json";
+            final var contentType = MIME_MAP.containsKey(acceptType) ? acceptType : "application/json";
 //            final var graphQLCompatible = GRAPHQL_COMPATIBLE_TYPE.getOrDefault(acceptType, true);
 
             res.type(contentType);
@@ -187,15 +185,15 @@ public class Controller {
     public void stop() {
 
         if (hgqlService != null) {
-            LOGGER.info("Attempting to shut down service at http://localhost:" + hgqlService.port() + "...");
+            log.info("Attempting to shut down service at http://localhost:" + hgqlService.port() + "...");
             hgqlService.stop();
-            LOGGER.info("Shut down server");
+            log.info("Shut down server");
         }
     }
 
     private void setResponseHeaders(final Request request, final Response response) {
 
-        final List<String> headersList = Arrays.asList(
+        final List<String> headersList = List.of(
                 "Origin",
                 "X-Requested-With",
                 "Content-Type",

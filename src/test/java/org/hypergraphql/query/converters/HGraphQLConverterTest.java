@@ -1,5 +1,7 @@
 package org.hypergraphql.query.converters;
 
+import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.hypergraphql.Controller;
 import org.hypergraphql.config.system.HGQLConfig;
 import org.hypergraphql.datafetching.ExecutionForestFactory;
@@ -8,17 +10,10 @@ import org.hypergraphql.services.HGQLConfigService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
-import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 class HGraphQLConverterTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(HGraphQLConverterTest.class);
 
     private Controller controller;
     private HGQLConfig config;
@@ -30,7 +25,7 @@ class HGraphQLConverterTest {
         final var configService = new HGQLConfigService();
         final var inputStream = getClass().getClassLoader().getResourceAsStream(configPath);
         config = configService.loadHGQLConfig(configPath, inputStream, true); // ???
-        if(controller == null) {
+        if (controller == null) {
             controller = new Controller();
             controller.start(config);
         }
@@ -39,7 +34,7 @@ class HGraphQLConverterTest {
     @AfterEach
     void cleanUp() {
 
-        if(controller != null) {
+        if (controller != null) {
             controller.stop();
         }
     }
@@ -47,37 +42,36 @@ class HGraphQLConverterTest {
     @Test
     void rewritingValidityOfGet() {
 
-        final var testQuery = "{\n" +
-                "Company_GET(limit:1, offset:3) {\n" +
-                "  name\n" +
-                "  owner {\n" +
-                "    name \n" +
-                "    birthPlace {\n" +
-                "      label(lang:en)\n" +
-                "    }\n" +
-                "  }\n" +
-                "}\n" +
-                "}";
+        final var testQuery = "{\n"
+                + "Company_GET(limit:1, offset:3) {\n"
+                + "  name\n"
+                + "  owner {\n"
+                + "    name \n"
+                + "    birthPlace {\n"
+                + "      label(lang:en)\n"
+                + "    }\n"
+                + "  }\n"
+                + "}\n"
+                + "}";
 
         final var test = generateRewritingForRootReturnValidity(testQuery);
         assertTrue(test);
     }
 
-
     @Test
     void rewritingValidityOfGetByID() {
 
-        final var testQuery = "{\n" +
-                "Company_GET_BY_ID(uris:[\"http://test1\", \"http://test2\", \"http://test3\"]) {\n" +
-                "  name\n" +
-                "  owner {\n" +
-                "    name \n" +
-                "    birthPlace {\n" +
-                "      label(lang:\"en\")\n" +
-                "    }\n" +
-                "  }\n" +
-                "}\n" +
-                "}";
+        final var testQuery = "{\n"
+                + "Company_GET_BY_ID(uris:[\"http://test1\", \"http://test2\", \"http://test3\"]) {\n"
+                + "  name\n"
+                + "  owner {\n"
+                + "    name \n"
+                + "    birthPlace {\n"
+                + "      label(lang:\"en\")\n"
+                + "    }\n"
+                + "  }\n"
+                + "}\n"
+                + "}";
 
         final var test = generateRewritingForRootReturnValidity(testQuery);
         assertTrue(test);
@@ -86,16 +80,16 @@ class HGraphQLConverterTest {
     @Test
     void rewritingValidityOfNonRootQuery() {
 
-        final var query = "{\n" +
-                "  Person_GET(limit:10) {\n" +
-                "    name\n" +
-                "    _id\n" +
-                "    birthDate\n" +
-                "    birthPlace {\n" +
-                "      label(lang:\"en\")\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+        final var query = "{\n"
+                + "  Person_GET(limit:10) {\n"
+                + "    name\n"
+                + "    _id\n"
+                + "    birthDate\n"
+                + "    birthPlace {\n"
+                + "      label(lang:\"en\")\n"
+                + "    }\n"
+                + "  }\n"
+                + "}";
 
         final Set<String> inputSet = Set.of(
             "http://test1",
@@ -110,17 +104,17 @@ class HGraphQLConverterTest {
     @Test
     void simple_fragment() {
 
-        final var query = "fragment PersonAttrs on Person {\n" +
-                "  prefLabel(lang: \"en\")\n" +
-                "  altLabel\n" +
-                "}\n" +
-                "\n" +
-                "{\n" +
-                "  Person_GET(limit: 10) { \n" +
-                "    _id\n" +
-                "    ...PersonAttrs\n" +
-                "  }\n" +
-                "}";
+        final var query = "fragment PersonAttrs on Person {\n"
+                + "  prefLabel(lang: \"en\")\n"
+                + "  altLabel\n"
+                + "}\n"
+                + "\n"
+                + "{\n"
+                + "  Person_GET(limit: 10) { \n"
+                + "    _id\n"
+                + "    ...PersonAttrs\n"
+                + "  }\n"
+                + "}";
 
         assertTrue(generateRewritingForRootReturnValidity(query));
     }
@@ -128,36 +122,36 @@ class HGraphQLConverterTest {
     @Test
     void nested_fragment() {
 
-        final var query = "fragment PersonAttrs on Person {\n" +
-                "  prefLabel(lang: \"en\")\n" +
-                "  altLabel\n" +
-                "}\n" +
-                "\n" +
-                "fragment PersonRecursive on Person {\n" +
-                "\t...PersonAttrs\n" +
-                "  broader {\n" +
-                "    ...PersonAttrs\n" +
-                "     broader{\n" +
-                "       ...PersonAttrs\n" +
-                "       broader {\n" +
-                "         ...PersonAttrs\n" +
-                "         broader {\n" +
-                "           ...PersonAttrs\n" +
-                "         }\n" +
-                "       }\n" +
-                "     }\n" +
-                "  }\n" +
-                "  narrower {\n" +
-                "    ...PersonAttrs\n" +
-                "  }\n" +
-                "}\n" +
-                "\n" +
-                "{\n" +
-                "  Person_GET(limit: 100) { \n" +
-                "    _id\n" +
-                "  \t...PersonRecursive\n" +
-                "  }\n" +
-                "}";
+        final var query = "fragment PersonAttrs on Person {\n"
+                + "  prefLabel(lang: \"en\")\n"
+                + "  altLabel\n"
+                + "}\n"
+                + "\n"
+                + "fragment PersonRecursive on Person {\n"
+                + "\t...PersonAttrs\n"
+                + "  broader {\n"
+                + "    ...PersonAttrs\n"
+                + "     broader{\n"
+                + "       ...PersonAttrs\n"
+                + "       broader {\n"
+                + "         ...PersonAttrs\n"
+                + "         broader {\n"
+                + "           ...PersonAttrs\n"
+                + "         }\n"
+                + "       }\n"
+                + "     }\n"
+                + "  }\n"
+                + "  narrower {\n"
+                + "    ...PersonAttrs\n"
+                + "  }\n"
+                + "}\n"
+                + "\n"
+                + "{\n"
+                + "  Person_GET(limit: 100) { \n"
+                + "    _id\n"
+                + "  \t...PersonRecursive\n"
+                + "  }\n"
+                + "}";
 
         assertTrue(generateRewritingForRootReturnValidity(query));
     }
@@ -170,8 +164,8 @@ class HGraphQLConverterTest {
         final var node = queryExecutionForest.getForest().iterator().next();
         final var query = node.getQuery();
         final var typeName = node.getRootType();
-        final var gqlQuery = HGraphQLConverter.convertToHGraphQL(config.getHgqlSchema(), query, new HashSet<>(), typeName);
-        LOGGER.debug(gqlQuery);
+        final var gqlQuery = HGraphQLConverter.convertToHGraphQL(config.getHgqlSchema(), query, Set.of(), typeName);
+        log.debug(gqlQuery);
         final var testQueryValidation = new QueryValidator(config.getSchema()).validateQuery(gqlQuery);
 
         return testQueryValidation.getValid();
@@ -185,7 +179,7 @@ class HGraphQLConverterTest {
         final var query = node.getQuery();
         final var typeName = node.getRootType();
         final var gqlQuery = HGraphQLConverter.convertToHGraphQL(config.getHgqlSchema(), query, inputSet, typeName);
-        LOGGER.debug(gqlQuery);
+        log.debug(gqlQuery);
         final var testQueryValidation = new QueryValidator(config.getSchema()).validateQuery(gqlQuery);
 
         return testQueryValidation.getValid();

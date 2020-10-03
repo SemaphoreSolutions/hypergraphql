@@ -1,39 +1,31 @@
 package org.hypergraphql.datafetching.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.NodeIterator;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.ResIterator;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDF;
-import org.hypergraphql.config.schema.FieldConfig;
-import org.hypergraphql.config.schema.QueryFieldConfig;
-import org.hypergraphql.config.schema.TypeConfig;
-import org.hypergraphql.config.system.ServiceConfig;
-import org.hypergraphql.datafetching.TreeExecutionResult;
-import org.hypergraphql.datamodel.HGQLSchema;
-import org.hypergraphql.datamodel.QueryNode;
-
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.vocabulary.RDF;
+import org.hypergraphql.config.schema.FieldConfig;
+import org.hypergraphql.config.schema.TypeConfig;
+import org.hypergraphql.config.system.ServiceConfig;
+import org.hypergraphql.datafetching.TreeExecutionResult;
+import org.hypergraphql.datamodel.HGQLSchema;
+import org.hypergraphql.datamodel.QueryNode;
 import static org.hypergraphql.config.schema.HGQLVocabulary.HGQL_QUERY_NAMESPACE;
 import static org.hypergraphql.config.schema.HGQLVocabulary.HGQL_QUERY_URI;
 import static org.hypergraphql.config.schema.HGQLVocabulary.RDF_TYPE;
 
 public abstract class Service {
 
-    protected String type;
-    protected String id;
+    private String type;
+    private String id;
 
     public String getType() {
         return type;
@@ -51,7 +43,12 @@ public abstract class Service {
         this.id = id;
     }
 
-    public abstract TreeExecutionResult executeQuery(JsonNode query, Set<String> input, Set<String> strings, String rootType, HGQLSchema schema);
+    public abstract TreeExecutionResult executeQuery(
+            JsonNode query,
+            Collection<String> input,
+            Collection<String> strings, // TODO - name?
+            String rootType,
+            HGQLSchema schema);
 
     public abstract void setParameters(ServiceConfig serviceConfig);
 
@@ -70,12 +67,12 @@ public abstract class Service {
 
             while (nodesIterator.hasNext()) {
                 final var currentNode = nodesIterator.next();
-                final var currentModel = buildModel(results, currentNode , schema);
+                final var currentModel = buildModel(results, currentNode, schema);
                 model.add(currentModel);
-                model.add(getModelFromResults(currentNode.get("fields"), results ,schema));
+                model.add(getModelFromResults(currentNode.get("fields"), results, schema));
             }
         } else {
-            final var currentModel = buildModel(results, query , schema);
+            final var currentModel = buildModel(results, query, schema);
             model.add(currentModel);
             model.add(getModelFromResults(query.get("fields"), results, schema));
         }
@@ -107,32 +104,33 @@ public abstract class Service {
         return model;
     }
 
-    Map<String, Set<String>> getResultset(final Model model,
+    Map<String, Collection<String>> getResultset(final Model model,
                                           final JsonNode query,
-                                          final Set<String> input,
-                                          final Set<String> markers,
+                                          final Collection<String> input,
+                                          final Collection<String> markers,
                                           final HGQLSchema schema) {
 
-        final Map<String, Set<String>> resultset = new HashMap<>();
+        final Map<String, Collection<String>> resultset = new HashMap<>();
         final JsonNode node;
 
         if (query.isArray()) {
             node = query; // TODO - in this situation, we should iterate over the array
         } else {
             node = query.get("fields");
-            if (markers.contains(query.get("nodeId").asText())){
-                resultset.put(query.get("nodeId").asText(),findRootIdentifiers(model,schema.getTypes().get(query.get("targetName").asText())));
+            if (markers.contains(query.get("nodeId").asText())) {
+                resultset.put(query.get("nodeId").asText(), findRootIdentifiers(model, schema.getTypes().get(query.get("targetName").asText())));
             }
         }
-        Set<LinkedList<QueryNode>> paths = new HashSet<>(); // TODO - variable reuse
+
+        Collection<LinkedList<QueryNode>> paths = new HashSet<>(); // TODO - variable reuse
         if (node != null && !node.isNull()) {
             paths = getQueryPaths(node, schema);
         }
 
         paths.forEach(path -> {
             if (hasMarkerLeaf(path, markers)) {
-                Set<String> identifiers = findIdentifiers(model, input, path);
-                String marker = getLeafMarker(path);
+                final Collection<String> identifiers = findIdentifiers(model, input, path);
+                final var marker = getLeafMarker(path);
                 resultset.put(marker, identifiers);
             }
         });
@@ -142,9 +140,9 @@ public abstract class Service {
         return resultset;
     }
 
-    private Set<String> findRootIdentifiers(final Model model, final TypeConfig targetName) {
+    private Collection<String> findRootIdentifiers(final Model model, final TypeConfig targetName) {
 
-        final Set<String> identifiers = new HashSet<>();
+        final Collection<String> identifiers = new HashSet<>();
         final var currentModel = ModelFactory.createDefaultModel();
         final var res = currentModel.createResource(targetName.getId());
         final var property = currentModel.createProperty(RDF_TYPE);
@@ -162,12 +160,12 @@ public abstract class Service {
         return path.getLast().getMarker();
     }
 
-    private Set<String> findIdentifiers(final Model model,
-                                        final Set<String> input,
+    private Collection<String> findIdentifiers(final Model model,
+                                        final Collection<String> input,
                                         final LinkedList<QueryNode> path) {
 
-        Set<String> subjects; // TODO - variable reuse
-        Set<String> objects; // TODO - variable reuse
+        Collection<String> subjects; // TODO - variable reuse
+        Collection<String> objects; // TODO - variable reuse
         if (input == null) {
             objects = new HashSet<>();
         } else {
@@ -198,7 +196,7 @@ public abstract class Service {
         return objects;
     }
 
-    private boolean hasMarkerLeaf(final LinkedList<QueryNode> path, final Set<String> markers) {
+    private boolean hasMarkerLeaf(final LinkedList<QueryNode> path, final Collection<String> markers) {
 
         for (final String marker : markers) {
             if (path.getLast().getMarker().equals(marker)) {
@@ -210,22 +208,18 @@ public abstract class Service {
 
     private Set<LinkedList<QueryNode>> getQueryPaths(final JsonNode query, final HGQLSchema schema) {
         final Set<LinkedList<QueryNode>> paths = new HashSet<>();
-        getQueryPathsRecursive(query, paths, null ,  schema);
+        getQueryPathsRecursive(query, paths, new LinkedList<>(), schema);
         return paths;
     }
 
     private void getQueryPathsRecursive(final JsonNode query,
-                                        final Set<LinkedList<QueryNode>> paths,
-                                        LinkedList<QueryNode> path,
+                                        final Collection<LinkedList<QueryNode>> paths,
+                                        final LinkedList<QueryNode> path,
                                         final HGQLSchema schema) {
 
         Model model = ModelFactory.createDefaultModel();
 
-        if (path == null) {
-            path = new LinkedList<>();
-        } else {
-            paths.remove(path);
-        }
+        paths.remove(path);
 
         if (query.isArray()) {
             final Iterator<JsonNode> iterator = query.elements();
@@ -239,7 +233,7 @@ public abstract class Service {
         }
     }
 
-    private void getFieldPath(final Set<LinkedList<QueryNode>> paths,
+    private void getFieldPath(final Collection<LinkedList<QueryNode>> paths,
                               final LinkedList<QueryNode> path,
                               final HGQLSchema schema,
                               final Model model,

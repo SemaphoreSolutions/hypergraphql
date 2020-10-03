@@ -1,40 +1,38 @@
 package org.hypergraphql.datafetching.services;
 
-import java.io.InputStream;
-import java.util.Map;
-import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.hypergraphql.config.system.ServiceConfig;
 import org.hypergraphql.datafetching.TreeExecutionResult;
 import org.hypergraphql.datamodel.HGQLSchema;
 import org.hypergraphql.query.converters.HGraphQLConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class HGraphQLService extends Service {
 
     private String url;
     private String user;
     private String password;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(HGraphQLService.class);
-
     @Override
     public TreeExecutionResult executeQuery(
             final JsonNode query,
-            final Set<String> input,
-            final Set<String> markers,
+            final Collection<String> input,
+            final Collection<String> markers,
             final String rootType,
             final HGQLSchema schema) {
 
         final Model model;
-        final Map<String, Set<String>> resultSet;
+        final Map<String, Collection<String>> resultSet;
         final var graphQlQuery = HGraphQLConverter.convertToHGraphQL(schema, query, input, rootType);
         model = getModelFromRemote(graphQlQuery);
 
@@ -57,8 +55,8 @@ public class HGraphQLService extends Service {
 
         final var model = ModelFactory.createDefaultModel();
 
-        LOGGER.debug("\n" + url);
-        LOGGER.debug("\n" + graphQlQuery);
+        log.debug("\n" + url);
+        log.debug("\n" + graphQlQuery);
 
         try {
 
@@ -79,7 +77,7 @@ public class HGraphQLService extends Service {
     @Override
     public void setParameters(ServiceConfig serviceConfig) {
 
-        this.id = serviceConfig.getId();
+        setId(serviceConfig.getId());
         this.url = serviceConfig.getUrl();
         this.user = serviceConfig.getUser();
         this.password = serviceConfig.getPassword();
