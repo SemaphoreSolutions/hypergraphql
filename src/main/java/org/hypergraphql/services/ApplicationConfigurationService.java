@@ -21,6 +21,7 @@ import org.hypergraphql.exception.HGQLConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO - This needs better test coverage
 public class ApplicationConfigurationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationConfigurationService.class);

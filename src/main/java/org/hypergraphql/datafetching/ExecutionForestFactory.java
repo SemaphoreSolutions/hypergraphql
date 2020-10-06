@@ -6,7 +6,7 @@ import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.hypergraphql.datamodel.HGQLSchema;
@@ -19,7 +19,7 @@ public class ExecutionForestFactory {
 
         final var queryFields = selectionSet(queryDocument);
 
-        final var counter = new AtomicInteger(0);
+        final var counter = new AtomicInteger();
         queryFields.getSelections().forEach(child -> { // query fields - why no args?
 
             if (child.getClass().getSimpleName().equals("Field")) {
@@ -77,6 +77,6 @@ public class ExecutionForestFactory {
                 .selectionSet(originalSelectionSet)
                 .build();
 
-        return new SelectionSet(Collections.singletonList(newSelection));
+        return new SelectionSet(List.of(newSelection));
     }
 }

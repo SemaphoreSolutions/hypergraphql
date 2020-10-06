@@ -73,6 +73,10 @@ public class HGQLSchema {
                       final Map<String, Service> services)
             throws HGQLConfigurationException {
 
+        if (registry == null) {
+            throw new HGQLConfigurationException("Registry cannot be null");
+        }
+
         schemaUri = HGQL_SCHEMA_NAMESPACE + schemaName;
         schemaNamespace = schemaUri + "/";
 

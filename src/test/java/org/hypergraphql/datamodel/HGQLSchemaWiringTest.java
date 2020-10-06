@@ -12,13 +12,15 @@ import static org.mockito.Mockito.mock;
 
 class HGQLSchemaWiringTest {
 
+    private static final String MESSAGE_PREFIX = "Unable to perform schema wiring";
+
     @Test
     @DisplayName("Constructor exception with nulls")
     void should_throw_exception_on_construction_from_nulls() {
 
         Executable executable = () -> new HGQLSchemaWiring(null, null, null);
         Throwable exception = assertThrows(HGQLConfigurationException.class, executable);
-        assertEquals("Unable to perform schema wiring", exception.getMessage());
+        assertEquals(MESSAGE_PREFIX, exception.getMessage().substring(0, MESSAGE_PREFIX.length()));
     }
 
     @Test
@@ -27,7 +29,7 @@ class HGQLSchemaWiringTest {
 
         Executable executable = () -> new HGQLSchemaWiring(null, "local", new ArrayList<>());
         Throwable exception = assertThrows(HGQLConfigurationException.class, executable);
-        assertEquals("Unable to perform schema wiring", exception.getMessage());
+        assertEquals(MESSAGE_PREFIX, exception.getMessage().substring(0, MESSAGE_PREFIX.length()));
     }
 
     @Test
@@ -36,7 +38,7 @@ class HGQLSchemaWiringTest {
 
         Executable executable = () -> new HGQLSchemaWiring(null, null, new ArrayList<>());
         Throwable exception = assertThrows(HGQLConfigurationException.class, executable);
-        assertEquals("Unable to perform schema wiring", exception.getMessage());
+        assertEquals(MESSAGE_PREFIX, exception.getMessage().substring(0, MESSAGE_PREFIX.length()));
     }
 
     @Test
@@ -46,7 +48,7 @@ class HGQLSchemaWiringTest {
         TypeDefinitionRegistry registry = mock(TypeDefinitionRegistry.class);
         Executable executable = () -> new HGQLSchemaWiring(registry, null, null);
         Throwable exception = assertThrows(HGQLConfigurationException.class, executable);
-        assertEquals("Unable to perform schema wiring", exception.getMessage());
+        assertEquals(MESSAGE_PREFIX, exception.getMessage().substring(0, MESSAGE_PREFIX.length()));
     }
 
     @Test
@@ -56,6 +58,6 @@ class HGQLSchemaWiringTest {
         TypeDefinitionRegistry registry = mock(TypeDefinitionRegistry.class);
         Executable executable = () -> new HGQLSchemaWiring(registry, "local", null);
         Throwable exception = assertThrows(HGQLConfigurationException.class, executable);
-        assertEquals("Unable to perform schema wiring", exception.getMessage());
+        assertEquals(MESSAGE_PREFIX, exception.getMessage().substring(0, MESSAGE_PREFIX.length()));
     }
 }

@@ -71,9 +71,12 @@ public class HGQLSchemaWiring {
         return hgqlSchema;
     }
 
-    // TODO - investigate alternatives
+    // TODO - investigate alternatives to String -> Class mechanism
     private Map<String, Service> generateServices(final List<ServiceConfig> serviceConfigs) {
 
+        if (serviceConfigs == null) {
+            throw new HGQLConfigurationException("Unable to perform schema wiring: ServiceConfigs cannot be null");
+        }
         final Map<String, Service> services = new HashMap<>();
         final var packageName = "org.hypergraphql.datafetching.services";
 

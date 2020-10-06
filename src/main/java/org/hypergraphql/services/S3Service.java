@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import java.io.InputStream;
 import java.net.URI;
 
+// TODO - This needs better test coverage
 public class S3Service {
 
     private AWSCredentials credentials(final String key, final String secret) {

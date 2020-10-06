@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.GraphQLError;
 import java.io.IOException;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,32 +31,32 @@ public class Controller {
     private static final String DEFAULT_MIME_TYPE = "RDF/XML";
     private static final String DEFAULT_ACCEPT_TYPE = "application/rdf+xml";
 
-    private static final Map<String, String> MIME_MAP = Map.of(
-        "application/json+rdf+xml", "RDF/XML",
-        "application/json+turtle", "TTL",
-        "application/json+ntriples", "N-TRIPLES",
-//        "application/json+n3", "N3",
-        "application/rdf+xml", "RDF/XML",
-        "application/turtle", "TTL",
-        "application/ntriples", "N-TRIPLES",
-        "application/n3", "N3",
-        "text/turtle", "TTL",
-        "text/ntriples", "N-TRIPLES",
-        "text/n3", "N3"
+    private static final Map<String, String> MIME_MAP = Map.ofEntries(
+        new SimpleEntry<>("application/json+rdf+xml", "RDF/XML"),
+        new SimpleEntry<>("application/json+turtle", "TTL"),
+        new SimpleEntry<>("application/json+ntriples", "N-TRIPLES"),
+        new SimpleEntry<>("application/json+n3", "N3"),
+        new SimpleEntry<>("application/rdf+xml", "RDF/XML"),
+        new SimpleEntry<>("application/turtle", "TTL"),
+        new SimpleEntry<>("application/ntriples", "N-TRIPLES"),
+        new SimpleEntry<>("application/n3", "N3"),
+        new SimpleEntry<>("text/turtle", "TTL"),
+        new SimpleEntry<>("text/ntriples", "N-TRIPLES"),
+        new SimpleEntry<>("text/n3", "N3")
     );
 
-    private static final Map<String, Boolean> GRAPHQL_COMPATIBLE_TYPE = Map.of(
-        "application/json+rdf+xml", true,
-        "application/json+turtle", true,
-        "application/json+ntriples", true,
-//        "application/json+n3", true,
-        "application/rdf+xml", false,
-        "application/turtle", false,
-        "application/ntriples", false,
-        "application/n3", false,
-        "text/turtle", false,
-        "text/ntriples", false,
-        "text/n3", false
+    private static final Map<String, Boolean> GRAPHQL_COMPATIBLE_TYPE = Map.ofEntries(
+        new SimpleEntry<>("application/json+rdf+xml", true),
+        new SimpleEntry<>("application/json+turtle", true),
+        new SimpleEntry<>("application/json+ntriples", true),
+        new SimpleEntry<>("application/json+n3", true),
+        new SimpleEntry<>("application/rdf+xml", false),
+        new SimpleEntry<>("application/turtle", false),
+        new SimpleEntry<>("application/ntriples", false),
+        new SimpleEntry<>("application/n3", false),
+        new SimpleEntry<>("text/turtle", false),
+        new SimpleEntry<>("text/ntriples", false),
+        new SimpleEntry<>("text/n3", false)
     );
 
     private static final int BAD_REQUEST_CODE = 400;
@@ -105,11 +106,8 @@ public class Controller {
             final var acceptType = req.headers("accept");
 
             final var mime = MIME_MAP.getOrDefault(acceptType, null);
-//            final var contentType = MIME_MAP.getOrDefault(acceptType, "application/json");
             final var graphQLCompatible = GRAPHQL_COMPATIBLE_TYPE.getOrDefault(acceptType, true);
-//            final var mime = MIME_MAP.getOrDefault(acceptType, null);
             final var contentType = MIME_MAP.containsKey(acceptType) ? acceptType : "application/json";
-//            final var graphQLCompatible = GRAPHQL_COMPATIBLE_TYPE.getOrDefault(acceptType, true);
 
             res.type(contentType);
 

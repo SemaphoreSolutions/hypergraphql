@@ -23,6 +23,7 @@ import org.hypergraphql.datamodel.HGQLSchemaWiring;
 import org.hypergraphql.exception.HGQLConfigurationException;
 import org.hypergraphql.util.PathUtils;
 
+// TODO - This needs better test coverage
 @Slf4j
 public class HGQLConfigService {
 
@@ -43,22 +44,22 @@ public class HGQLConfigService {
                               final String password,
                               boolean classpath) {
 
-        final ObjectMapper mapper = new ObjectMapper();
+        final var mapper = new ObjectMapper();
 
         try {
 
-            final HGQLConfig config = mapper.readValue(inputStream, HGQLConfig.class);
-            final SchemaParser schemaParser = new SchemaParser();
+            final var config = mapper.readValue(inputStream, HGQLConfig.class);
+            final var schemaParser = new SchemaParser();
 
-            final String fullSchemaPath = extractFullSchemaPath(hgqlConfigPath, config.getSchemaFile());
+            final var fullSchemaPath = extractFullSchemaPath(hgqlConfigPath, config.getSchemaFile());
 
             log.debug("Schema config path: " + fullSchemaPath);
 
-            final Reader reader = selectAppropriateReader(fullSchemaPath, username, password, classpath);
-            final TypeDefinitionRegistry registry =
+            final var reader = selectAppropriateReader(fullSchemaPath, username, password, classpath);
+            final var registry =
                     schemaParser.parse(reader);
 
-            final HGQLSchemaWiring wiring = new HGQLSchemaWiring(registry, config.getName(), config.getServiceConfigs());
+            final var wiring = new HGQLSchemaWiring(registry, config.getName(), config.getServiceConfigs());
             config.setGraphQLSchema(wiring.getSchema());
             config.setHgqlSchema(wiring.getHgqlSchema());
             return config;
@@ -106,7 +107,7 @@ public class HGQLConfigService {
         }
 
         try {
-            final String body = getRequest.asString().getBody();
+            final var body = getRequest.asString().getBody();
             return new StringReader(body);
         } catch (UnirestException e) {
             throw new HGQLConfigurationException("Unable to load configuration", e);
@@ -118,18 +119,18 @@ public class HGQLConfigService {
                                   final String password)
             throws URISyntaxException {
 
-        final URI uri = new URI(schemaPath);
+        final var uri = new URI(schemaPath);
         return new InputStreamReader(s3Service.openS3Stream(uri, username, password), StandardCharsets.UTF_8);
     }
 
     private String extractFullSchemaPath(final String hgqlConfigPath, final String schemaPath) {
 
         log.debug("HGQL config path: {}, schema path: {}", hgqlConfigPath, schemaPath);
-        final String configPath = FilenameUtils.getFullPath(hgqlConfigPath);
+        final var configPath = FilenameUtils.getFullPath(hgqlConfigPath);
         if (StringUtils.isBlank(configPath)) {
             return schemaPath;
         } else {
-            final String abs = PathUtils.makeAbsolute(configPath, schemaPath);
+            final var abs = PathUtils.makeAbsolute(configPath, schemaPath);
             log.debug("Absolute path: {}", abs);
             return PathUtils.makeAbsolute(configPath, schemaPath);
         }
@@ -139,10 +140,10 @@ public class HGQLConfigService {
 
         log.debug("Obtaining reader for: {}", schemaPath);
 
-        final String fn = schemaPath.contains("!")
+        final var fn = schemaPath.contains("!")
                 ? schemaPath.substring(schemaPath.lastIndexOf("!") + 1)
                 : schemaPath;
-        final String filename = fn.startsWith("/") ? fn.substring(fn.indexOf("/") + 1) : fn;
+        final var filename = fn.startsWith("/") ? fn.substring(fn.indexOf("/") + 1) : fn;
         log.debug("For filename: {}", filename);
         return new InputStreamReader(getClass().getClassLoader().getResourceAsStream(filename)); // TODO - address this
     }

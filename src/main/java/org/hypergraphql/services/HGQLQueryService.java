@@ -20,6 +20,7 @@ import org.hypergraphql.query.ValidatedQuery;
 /**
  * Created by szymon on 01/11/2017.
  */
+// TODO - This needs better test coverage
 public class HGQLQueryService {
 
     private final GraphQL graphql;
