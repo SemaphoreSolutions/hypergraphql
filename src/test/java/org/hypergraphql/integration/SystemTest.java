@@ -7,8 +7,8 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.jena.fuseki.embedded.FusekiServer;
 import org.apache.jena.query.Dataset;
@@ -27,6 +27,7 @@ import org.hypergraphql.services.HGQLConfigService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
@@ -98,20 +99,15 @@ class SystemTest {
         Resource res = ResourceFactory.createResource("http://hypergraphql.org/query");
         Selector sel = new SelectorImpl(res, null, (Object) null);
         StmtIterator iterator = returnedModel.listStatements(sel);
-        Set<Statement> statements = new HashSet<>();
+        List<Statement> statements = new ArrayList<>();
         while (iterator.hasNext()) {
             statements.add(iterator.nextStatement());
         }
-
-        for (Statement statement : statements) {
-            returnedModel.remove(statement);
-        }
-
+        returnedModel.remove(statements);
         compareModels(expectedModel, returnedModel);
-        StmtIterator iterator2 = expectedModel.listStatements();
-        while (iterator2.hasNext()) {
-            assertTrue(returnedModel.contains(iterator2.next()));
-        }
+
+//        assertEquals(0, expectedModel.difference(returnedModel).size());
+//        assertEquals(0, returnedModel.difference(expectedModel).size());
 
         assertTrue(expectedModel.isIsomorphicWith(returnedModel));
     }
