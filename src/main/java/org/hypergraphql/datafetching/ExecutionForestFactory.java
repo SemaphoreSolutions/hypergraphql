@@ -22,10 +22,11 @@ public class ExecutionForestFactory {
         final var counter = new AtomicInteger();
         queryFields.getSelections().forEach(child -> { // query fields - why no args?
 
-            if (child.getClass().getSimpleName().equals("Field")) {
+            if (child.getClass().equals(Field.class)) {
 
                 final var nodeId = "x_" + counter.incrementAndGet();
                 forest.getForest().add(new ExecutionTreeNode((Field) child, nodeId, schema));
+                forest.addExecutionTreeNode((Field) child, nodeId, schema);
 
             }
         });

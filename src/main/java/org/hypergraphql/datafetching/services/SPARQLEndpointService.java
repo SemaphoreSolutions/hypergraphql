@@ -115,8 +115,7 @@ public class SPARQLEndpointService extends SPARQLService {
                     && queryType.equals(HGQLVocabulary.HGQL_QUERY_GET_BY_ID_FIELD)) {
                 final Iterator<JsonNode> uris = query.get("args").get("uris").elements();
                 while (uris.hasNext()) {
-                    String uri = uris.next().asText();
-                    input.add(uri);
+                    input.add(uris.next().asText());
                 }
             }
             return new ArrayList<>(input);
